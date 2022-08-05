@@ -1,0 +1,12 @@
+{
+    "files.associations": {
+        "*.vue": "vue",
+        "stat.h": "c",
+        "types.h": "c",
+        "user.h": "c",
+        "cstdio": "c",
+        "cstdlib": "c",
+        "limits": "c",
+        "fs.h": "c"
+    }
+}
