@@ -2,6 +2,12 @@
     "makefile.extensionOutputFolder": "./.vscode",
     "files.associations": {
         "*.vue": "vue",
-        "user.h": "c"
+        "user.h": "c",
+        "proc.h": "c",
+        "file.h": "c",
+        "fcntl.h": "c",
+        "types.h": "c",
+        "riscv.h": "c",
+        "sysinfo.h": "c"
     }
 }
