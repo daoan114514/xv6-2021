@@ -19,9 +19,6 @@ extern void forkret(void);
 static void freeproc(struct proc *p);
 
 extern char trampoline[]; // trampoline.S
-#ifdef LAB_PGTBL
-struct usyscall* usyscall;
-#endif
 
 // helps ensure that wakeups of wait()ing
 // parents are not lost. helps obey the
@@ -130,6 +127,16 @@ found:
     return 0;
   }
 
+  // Allocate usyscall
+  #ifdef LAB_PGTBL
+  if((p->usyscall = (struct usyscall*)kalloc()) == 0){
+    freeproc(p);
+    release(&p->lock);
+    return 0;
+  }
+  p->usyscall->pid = p->pid;
+  #endif
+
   // An empty user page table.
   p->pagetable = proc_pagetable(p);
   if(p->pagetable == 0){
@@ -137,16 +144,6 @@ found:
     release(&p->lock);
     return 0;
   }
-
-  // Allocate usyscall
-  #ifdef LAB_PGTBL
-  if((usyscall = (struct usyscall*)kalloc()) == 0){
-    freeproc(p);
-    release(&p->lock);
-    return 0;
-  }
-  usyscall->pid = p->pid;
-  #endif
 
   // Set up new context to start executing at forkret,
   // which returns to user space.
@@ -166,8 +163,9 @@ freeproc(struct proc *p)
   if(p->trapframe)
     kfree((void*)p->trapframe);
   #ifdef LAB_PGTBL
-  if(usyscall)
-    kfree((void*)usyscall);
+  if(p->usyscall)
+    kfree((void*)p->usyscall);
+  p->usyscall = 0;
   #endif
   p->trapframe = 0;
   if(p->pagetable)
@@ -218,7 +216,7 @@ proc_pagetable(struct proc *p)
   // (also defined in memlayout.h)
   #ifdef LAB_PGTBL
   if(mappages(pagetable, USYSCALL, PGSIZE,
-              (uint64)usyscall, PTE_R | PTE_U) < 0){
+              (uint64)(p->usyscall), PTE_R | PTE_U) < 0){
     uvmunmap(pagetable, TRAMPOLINE, 1, 0);
     uvmunmap(pagetable, TRAPFRAME, 1, 0);             
     uvmfree(pagetable, 0);
