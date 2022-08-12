@@ -19,6 +19,9 @@ extern void forkret(void);
 static void freeproc(struct proc *p);
 
 extern char trampoline[]; // trampoline.S
+#ifdef LAB_PGTBL
+struct usyscall* usyscall;
+#endif
 
 // helps ensure that wakeups of wait()ing
 // parents are not lost. helps obey the
@@ -135,6 +138,16 @@ found:
     return 0;
   }
 
+  // Allocate usyscall
+  #ifdef LAB_PGTBL
+  if((usyscall = (struct usyscall*)kalloc()) == 0){
+    freeproc(p);
+    release(&p->lock);
+    return 0;
+  }
+  usyscall->pid = p->pid;
+  #endif
+
   // Set up new context to start executing at forkret,
   // which returns to user space.
   memset(&p->context, 0, sizeof(p->context));
@@ -152,6 +165,10 @@ freeproc(struct proc *p)
 {
   if(p->trapframe)
     kfree((void*)p->trapframe);
+  #ifdef LAB_PGTBL
+  if(usyscall)
+    kfree((void*)usyscall);
+  #endif
   p->trapframe = 0;
   if(p->pagetable)
     proc_freepagetable(p->pagetable, p->sz);
@@ -196,6 +213,18 @@ proc_pagetable(struct proc *p)
     return 0;
   }
 
+  // map one read-only page at USYSCALL (a VA defined in memlayout.h).
+  // At the start of this page, store a struct usyscall 
+  // (also defined in memlayout.h)
+  #ifdef LAB_PGTBL
+  if(mappages(pagetable, USYSCALL, PGSIZE,
+              (uint64)usyscall, PTE_R | PTE_U) < 0){
+    uvmunmap(pagetable, TRAMPOLINE, 1, 0);
+    uvmunmap(pagetable, TRAPFRAME, 1, 0);             
+    uvmfree(pagetable, 0);
+    return 0;
+  }
+  #endif
   return pagetable;
 }
 
@@ -206,6 +235,9 @@ proc_freepagetable(pagetable_t pagetable, uint64 sz)
 {
   uvmunmap(pagetable, TRAMPOLINE, 1, 0);
   uvmunmap(pagetable, TRAPFRAME, 1, 0);
+  #ifdef LAB_PGTBL
+  uvmunmap(pagetable, USYSCALL, 1, 0);    
+  #endif
   uvmfree(pagetable, sz);
 }
 
