@@ -91,7 +91,7 @@ sys_pgaccess(void)
 
   struct proc* p = myproc();
 
-  for(int i = 0; i < n && i < 32; i++){
+  for(int i = 0; i < n && i < 64; i++){
     pte_t* pte = walk(p->pagetable, va, 0);
     if(*pte & PTE_A){
       mask |= (1<<i);
