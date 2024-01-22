@@ -105,4 +105,9 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
+  int tickcnt;                 // calculate how many ticks the process has used since last alarm
+  int ticks;                   // the kernel calls handler after ticks ticks
+  int handler_st;              // 1 = handler is running, 2 = not running
+  void (*handler)();           // interrupt handler
+  struct trapframe *saved_trapframe; // trapframe for alarmtest
 };

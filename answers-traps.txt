@@ -1,0 +1,6 @@
+1. registers contain arguments to functions:a0-a7;a2
+2.2c:	7a050513          	addi	a0,a0,1952;  30:	00000097          	auipc	ra,0x0
+3.628;
+4.628
+5.283181056
+6.i don't know
